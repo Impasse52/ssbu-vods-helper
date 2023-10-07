@@ -1,0 +1,5 @@
+snapshots/**
+*.csv
+*.mkv
+*.mp4
+*.png
