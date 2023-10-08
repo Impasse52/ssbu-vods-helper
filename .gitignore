@@ -1,4 +1,7 @@
-snapshots/**
+data/dataframes/**
+data/plots/**
+data/snapshots/**
+data/timestamps/**
 *.csv
 *.mkv
 *.mp4
