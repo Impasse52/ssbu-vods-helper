@@ -1,8 +1,6 @@
-data/dataframes/**
-data/plots/**
-data/snapshots/**
-data/timestamps/**
+data/** 
 *.csv
 *.mkv
 *.mp4
 *.png
+**/__pycache/** */

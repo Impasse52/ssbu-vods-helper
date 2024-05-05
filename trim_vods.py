@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import sys
@@ -11,7 +12,7 @@ def tokenize_titles(filename: str) -> list:
     with open(filename) as vod_file:
         vod_file = "".join(vod_file.readlines())
 
-    title_re = r"(.*) \| (.*) - (.*) \((.*)\) vs (.*) \((.*)\) -- (\d+:\d\d:\d\d) - (\d+:\d\d:\d\d)"
+    title_re = r"(.*) \| (.*) - (.*) \((.*?)\) vs (.*) \((.*?)\) -- (\d+:\d\d:\d\d) - (\d+:\d\d:\d\d) -- (\d+)"
     title = re.findall(title_re, vod_file)
     print(title)
 
@@ -31,30 +32,51 @@ def trim_vods(titles: list, input_filename: str, videos_dir: str) -> None:
         start_time = t[6]
         end_time = t[7]
 
-        crop(start_time, end_time, input_filename, f"{videos_dir}/{output_filename}.mp4")
+        crop(
+            start_time, end_time, input_filename, f"{videos_dir}/{output_filename}.mp4"
+        )
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    from thumbfair.thumbfair import gen_thumbnail_for_vod
+    from thumbfair.thumbfair import gen_thumbnail
 
     if len(sys.argv) > 1:
-        vod_dir = sys.argv[1]
+        input_dir = sys.argv[1]
         timestamps_dir = sys.argv[2]
     else:
-        vod_dir = "/mnt/Main/Documents/Misc/Syncthing/Code/Projects/VOD-Assistant/2023-10-15_1951643050_smashbrositalia_altomare_z_la_scomparsa_di_chrono_ft_forze_sasyzza_zio_al_and_more.mkv"
-        timestamps_dir = "/home/impasse/Code/Projects/Thumbfair/AMSZ4.md"
-        
-    output_dir = Path(timestamps_dir).name
-    videos_dir = f"./output/{output_dir}/videos"
+        input_dir = "/home/impasse/Code/Projects/VOD-Assistant/u.mkv"
+        timestamps_dir = "/home/impasse/Code/Projects/VOD-Assistant/data/timestamps/2024-04-28_2131834020/2024-04-28_2131834020.md"
 
+    with open(
+        "/home/impasse/Code/Projects/Thumbfair/thumbfair/resources/skins.json"
+    ) as skins:
+        skins = json.load(skins)
 
+    titles = tokenize_titles(timestamps_dir)
+    t_name = titles[0][0]
     try:
-        os.mkdir(videos_dir)
+        os.mkdir(f"output/thumbnails/{t_name}/")
+    except FileExistsError:
+        print(f"Thumbnail directory already exists for {t_name}, skipping.")
 
-        titles = tokenize_titles(timestamps_dir)
-        trim_vods(titles, vod_dir, videos_dir)
-    except:
-        print("Videos dir already exists; skipping.")
-            
-    gen_thumbnail_for_vod(timestamps_dir, "timestamps", r"/home/impasse/Pictures/Altro/Smash/Portraits")
+    for t in titles:
+        _, r_name, p1_nick, p1_char, p2_nick, p2_char, _, _, _ = t
+
+        # only get the first character for each player
+        p1_char = p1_char.split(", ")[0]
+        p2_char = p2_char.split(", ")[0]
+
+        output = gen_thumbnail(
+            p1_nick.replace("é", "e'").lower(),
+            p2_nick.replace("é", "e'").lower(),
+            r_name.lower(),
+            p1_char,
+            p2_char,
+            skins[p1_char].get(p1_nick, "1"),
+            skins[p2_char].get(p2_nick, "1"),
+        )
+        output.save(f"output/thumbnails/{t_name}/{p1_nick}_{p2_nick}_{r_name}.png")
+
+    # vods_dir = f"./output/vods/{t_name}"
+    # os.mkdir(vods_dir)
+    # trim_vods(titles, input_dir, vods_dir)
