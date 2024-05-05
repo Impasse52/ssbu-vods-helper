@@ -3,6 +3,8 @@ import os
 import re
 import sys
 
+from utils.trim_utils import replace_accented_with_quote
+
 
 def crop(start, end, input, output) -> None:
     os.system(rf'ffmpeg -i "{input}" -ss {start} -to {end} -c copy "{output}"')
@@ -67,8 +69,8 @@ if __name__ == "__main__":
         p2_char = p2_char.split(", ")[0]
 
         output = gen_thumbnail(
-            p1_nick.replace("é", "e'").lower(),
-            p2_nick.replace("é", "e'").lower(),
+            replace_accented_with_quote(p1_nick).lower(),
+            replace_accented_with_quote(p2_nick).lower(),
             r_name.lower(),
             p1_char,
             p2_char,
